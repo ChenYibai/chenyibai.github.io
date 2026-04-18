@@ -131,14 +131,16 @@
 
     try {
       const res = await fetch(
-        `https://api.github.com/users/${USERNAME}/repos?sort=updated&direction=desc&per_page=100`
+        `https://api.github.com/users/${USERNAME}/repos?sort=created&direction=desc&per_page=100`
       );
       if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
       const repos = await res.json();
+      const exclude = ['chenyibai.github.io', 'jemistry'];
 
       status.style.display = 'none';
 
       repos.forEach(repo => {
+        if (exclude.includes(repo.name)) return;
         const li = document.createElement('li');
         li.className = 'repo-card';
         li.innerHTML = `
@@ -148,7 +150,7 @@
             ${repo.language ? `<span>${langDot(escape(repo.language))}</span>` : ''}
             <span>⭐ ${escape(repo.stargazers_count)}</span>
             <span>🍴 ${escape(repo.forks_count)}</span>
-            <span>Updated ${escape(formatDate(repo.updated_at))}</span>
+            <span>Created ${escape(formatDate(repo.created_at))}</span>
           </div>
         `;
         list.appendChild(li);
