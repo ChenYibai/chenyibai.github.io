@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChenYibai</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f6f8fa;
+      color: #24292f;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #24292f;
+      color: #fff;
+      padding: 2.5rem 1rem;
+      text-align: center;
+    }
+
+    header h1 { font-size: 2rem; font-weight: 600; letter-spacing: -0.5px; }
+    header p  { margin-top: 0.5rem; color: #8b949e; font-size: 1rem; }
+
+    main {
+      max-width: 760px;
+      margin: 2.5rem auto;
+      padding: 0 1rem;
+    }
+
+    #status {
+      text-align: center;
+      color: #57606a;
+      padding: 2rem 0;
+      font-size: 0.95rem;
+    }
+
+    .repo-list { list-style: none; }
+
+    .repo-card {
+      background: #fff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.15s;
+    }
+
+    .repo-card:hover { border-color: #0969da; }
+
+    .repo-card a {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0969da;
+      text-decoration: none;
+    }
+
+    .repo-card a:hover { text-decoration: underline; }
+
+    .repo-desc {
+      margin-top: 0.35rem;
+      font-size: 0.875rem;
+      color: #57606a;
+    }
+
+    .repo-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      color: #57606a;
+    }
+
+    .repo-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+    .lang-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #6e7681;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>ChenYibai</h1>
+  <p>Personal Homepage</p>
+</header>
+
+<main>
+  <p id="status">Loading repositories…</p>
+  <ul class="repo-list" id="repo-list"></ul>
+</main>
+
+<script>
+  const USERNAME = 'ChenYibai';
+  const LANG_COLORS = {
+    JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
+    Java: '#b07219', 'C++': '#f34b7d', C: '#555555', Ruby: '#701516',
+    Go: '#00ADD8', Rust: '#dea584', HTML: '#e34c26', CSS: '#563d7c',
+    Shell: '#89e051', Swift: '#F05138', Kotlin: '#A97BFF',
+  };
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function langDot(lang) {
+    const color = LANG_COLORS[lang] || '#6e7681';
+    return `<span class="lang-dot" style="background:${color}"></span>${lang}`;
+  }
+
+  function escape(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  async function loadRepos() {
+    const status = document.getElementById('status');
+    const list   = document.getElementById('repo-list');
+
+    try {
+      const res = await fetch(
+        `https://api.github.com/users/${USERNAME}/repos?sort=updated&direction=desc&per_page=100`
+      );
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const repos = await res.json();
+
+      status.style.display = 'none';
+
+      repos.forEach(repo => {
+        const li = document.createElement('li');
+        li.className = 'repo-card';
+        li.innerHTML = `
+          <a href="${escape(repo.html_url)}" target="_blank" rel="noopener noreferrer">${escape(repo.name)}</a>
+          ${repo.description ? `<p class="repo-desc">${escape(repo.description)}</p>` : ''}
+          <div class="repo-meta">
+            ${repo.language ? `<span>${langDot(escape(repo.language))}</span>` : ''}
+            <span>⭐ ${escape(repo.stargazers_count)}</span>
+            <span>🍴 ${escape(repo.forks_count)}</span>
+            <span>Updated ${escape(formatDate(repo.updated_at))}</span>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+
+      if (repos.length === 0) {
+        status.style.display = 'block';
+        status.textContent = 'No public repositories found.';
+      }
+    } catch (err) {
+      status.textContent = `Failed to load repositories: ${err.message}`;
+      status.style.display = 'block';
+    }
+  }
+
+  loadRepos();
+</script>
+
+</body>
+</html>
